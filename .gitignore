@@ -1,0 +1,21 @@
+# Build artifacts
+*.o
+*.out
+cryptvault
+
+# Vault data — never commit encrypted secrets
+vault.bin
+*.bin
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Dependency/CMake leftovers (if you expand the build system later)
+CMakeCache.txt
+CMakeFiles/
