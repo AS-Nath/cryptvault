@@ -35,28 +35,6 @@ static void printMenu() {
               << "\n  Choice: ";
 }
 
-/*static void runDataProtectorDemo() {
-    std::cout << "\n── DataProtector<T> demo ──\n";
-
-    auto xorCipher    = std::make_unique<XORCipher>("demo-key");
-    auto caesarCipher = std::make_unique<CaesarCipher>(13);
-
-    DataProtector<std::string> sp(xorCipher.get());
-    DataProtector<int>         ip(caesarCipher.get());
-
-    std::string secretStr = "hunter2";
-    auto encStr = sp.protect(secretStr);
-    std::cout << "  [XOR]    String \"" << secretStr << "\" → "
-              << encStr.size() << " encrypted bytes → \""
-              << sp.unprotect(encStr) << "\"\n";
-
-    int secretInt = 42;
-    auto encInt = ip.protect(secretInt);
-    std::cout << "  [Caesar] Integer " << secretInt << " → "
-              << encInt.size() << " encrypted bytes → "
-              << ip.unprotect(encInt) << "\n";
-}*/
-
 // Ask the user which cipher to use and return type + param
 static std::pair<CipherType, int> chooseCipher() {
     std::cout << "\n  Choose cipher for this credential:\n"
@@ -78,7 +56,7 @@ static std::pair<CipherType, int> chooseCipher() {
     return {CipherType::XOR, 0};
 }
 
-int main() {
+int main(void) {
     printBanner();
 
     std::string masterPwd = prompt("Set master password");
