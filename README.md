@@ -27,7 +27,10 @@ cryptvault/
 ├── vault.h           # Vault class declaration
 ├── vault.cpp         # Vault implementation + binary file I/O
 ├── main.cpp          # Console UI
+├── vault_io.h        # Declares helper functions for pure C file handling 
+├── vault_io.c        # Implements vault_io.h 
 └── Makefile
+
 ```
 
 ---
@@ -65,7 +68,6 @@ On first launch you will be prompted for a master password. This password gates 
 | `3` | List all stored services and usernames (no passwords shown) |
 | `4` | Save the vault to `vault.bin` |
 | `5` | Load the vault from `vault.bin` |
-| `6` | Run a `DataProtector<T>` demo |
 | `0` | Exit |
 
 ### Typical session

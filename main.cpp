@@ -4,7 +4,6 @@
 #include <memory>
 #include "cipher.h"
 #include "vault.h"
-#include "data_protector.h"
 
 static void clearInput() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -32,12 +31,11 @@ static void printMenu() {
               << "  [3] List services\n"
               << "  [4] Save vault\n"
               << "  [5] Load vault\n"
-              << "  [6] Demo DataProtector<T>\n"
               << "  [0] Exit\n"
               << "\n  Choice: ";
 }
 
-static void runDataProtectorDemo() {
+/*static void runDataProtectorDemo() {
     std::cout << "\n── DataProtector<T> demo ──\n";
 
     auto xorCipher    = std::make_unique<XORCipher>("demo-key");
@@ -57,7 +55,7 @@ static void runDataProtectorDemo() {
     std::cout << "  [Caesar] Integer " << secretInt << " → "
               << encInt.size() << " encrypted bytes → "
               << ip.unprotect(encInt) << "\n";
-}
+}*/
 
 // Ask the user which cipher to use and return type + param
 static std::pair<CipherType, int> chooseCipher() {
@@ -132,9 +130,6 @@ int main() {
                 vault.load(vaultFile, mp);
                 break;
             }
-            case 6:
-                runDataProtectorDemo();
-                break;
             case 0:
                 std::cout << "  Goodbye.\n";
                 return 0;
