@@ -1,42 +1,9 @@
 #include "vault.h"
+#include "vault_io.h"
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #include <iostream>
-
-// ── file I/O helpers ──────────────────────────────────────────────────────────
-
-static void writeStr(FILE* f, const std::string& s) {
-    uint32_t len = static_cast<uint32_t>(s.size());
-    std::fwrite(&len, sizeof(len), 1, f);
-    if (len > 0) std::fwrite(s.data(), 1, len, f);
-}
-
-static std::string readStr(FILE* f) {
-    uint32_t len = 0;
-    if (std::fread(&len, sizeof(len), 1, f) != 1)
-        throw std::runtime_error("File read error: truncated string length");
-    if (len == 0) return {};
-    std::string s(len, '\0');
-    if (std::fread(s.data(), 1, len, f) != len)
-        throw std::runtime_error("File read error: truncated string body");
-    return s;
-}
-
-static void writeBytes(FILE* f, const std::vector<uint8_t>& v) {
-    uint32_t len = static_cast<uint32_t>(v.size());
-    std::fwrite(&len, sizeof(len), 1, f);
-    if (len > 0) std::fwrite(v.data(), 1, len, f);
-}
-
-static std::vector<uint8_t> readBytes(FILE* f) {
-    uint32_t len = 0;
-    if (std::fread(&len, sizeof(len), 1, f) != 1)
-        throw std::runtime_error("File read error: truncated byte length");
-    std::vector<uint8_t> v(len);
-    if (len > 0 && std::fread(v.data(), 1, len, f) != len)
-        throw std::runtime_error("File read error: truncated byte body");
-    return v;
-}
 
 // ── Vault ─────────────────────────────────────────────────────────────────────
 
@@ -46,7 +13,6 @@ std::string Vault::hashPassword(const std::string& pwd) {
     return std::to_string(h);
 }
 
-// XOR key is derived from the master password so no separate key is needed
 Vault::Vault(const std::string& masterPassword)
     : masterPasswordHash_(hashPassword(masterPassword)),
       xorKey_(masterPassword) {}
@@ -103,69 +69,122 @@ void Vault::listServices() const {
     }
 }
 
+// ── save ──────────────────────────────────────────────────────────────────────
+
 void Vault::save(const std::string& filepath,
                  const std::string& masterPassword) const {
     authenticate(masterPassword);
+
     FILE* f = std::fopen(filepath.c_str(), "wb");
     if (!f) throw std::runtime_error("Cannot open file for writing: " + filepath);
 
-    const char magic[] = "CVT2";  // bumped version — format changed
-    std::fwrite(magic, 1, 4, f);
-    writeStr(f, masterPasswordHash_);
+    /* magic + master hash */
+    const char magic[] = "CVT2";
+    if (std::fwrite(magic, 1, 4, f) != 4) goto write_err;
 
-    uint32_t count = static_cast<uint32_t>(store_.size());
-    std::fwrite(&count, sizeof(count), 1, f);
+    {
+        const std::string& h = masterPasswordHash_;
+        if (cv_write_str(f, h.c_str(), static_cast<uint32_t>(h.size())) != 0)
+            goto write_err;
 
-    for (const auto& [svc, cred] : store_) {
-        writeStr(f, svc);
-        writeStr(f, cred.url);
-        writeStr(f, cred.username);
-        writeBytes(f, cred.encryptedPassword);
-        uint8_t ct = static_cast<uint8_t>(cred.cipherType);
-        std::fwrite(&ct, 1, 1, f);
-        int32_t param = static_cast<int32_t>(cred.cipherParam);
-        std::fwrite(&param, sizeof(param), 1, f);
+        uint32_t count = static_cast<uint32_t>(store_.size());
+        if (std::fwrite(&count, sizeof(count), 1, f) != 1) goto write_err;
+
+        for (const auto& [svc, cred] : store_) {
+            if (cv_write_str(f, svc.c_str(),          static_cast<uint32_t>(svc.size()))          != 0) goto write_err;
+            if (cv_write_str(f, cred.url.c_str(),     static_cast<uint32_t>(cred.url.size()))     != 0) goto write_err;
+            if (cv_write_str(f, cred.username.c_str(),static_cast<uint32_t>(cred.username.size()))!= 0) goto write_err;
+            if (cv_write_bytes(f, cred.encryptedPassword.data(),
+                               static_cast<uint32_t>(cred.encryptedPassword.size()))              != 0) goto write_err;
+
+            uint8_t  ct    = static_cast<uint8_t>(cred.cipherType);
+            int32_t  param = static_cast<int32_t>(cred.cipherParam);
+            if (std::fwrite(&ct,    1,           1, f) != 1) goto write_err;
+            if (std::fwrite(&param, sizeof(param),1, f) != 1) goto write_err;
+        }
     }
 
     std::fclose(f);
-    std::cout << "[+] Vault saved to " << filepath << " (" << count << " entries)\n";
+    std::cout << "[+] Vault saved to " << filepath
+              << " (" << store_.size() << " entries)\n";
+    return;
+
+write_err:
+    std::fclose(f);
+    throw std::runtime_error("Write error while saving vault");
 }
+
+// ── load ──────────────────────────────────────────────────────────────────────
 
 void Vault::load(const std::string& filepath,
                  const std::string& masterPassword) {
     FILE* f = std::fopen(filepath.c_str(), "rb");
     if (!f) throw std::runtime_error("Cannot open file: " + filepath);
 
+    /* verify magic */
     char magic[5] = {};
     if (std::fread(magic, 1, 4, f) != 4 || std::string(magic, 4) != "CVT2") {
         std::fclose(f);
         throw std::runtime_error("Invalid or unsupported vault file (expected CVT2)");
     }
 
-    std::string savedHash = readStr(f);
+    /* verify master password */
+    char*    hashBuf = nullptr;
+    uint32_t hashLen = 0;
+    if (cv_read_str(f, &hashBuf, &hashLen) != 0) {
+        std::fclose(f);
+        throw std::runtime_error("File read error: master hash");
+    }
+    std::string savedHash(hashBuf, hashLen);
+    std::free(hashBuf);
+
     if (savedHash != hashPassword(masterPassword)) {
         std::fclose(f);
         throw std::runtime_error("Authentication failed: incorrect master password");
     }
 
+    /* entry count */
     uint32_t count = 0;
     if (std::fread(&count, sizeof(count), 1, f) != 1) {
         std::fclose(f);
-        throw std::runtime_error("File read error: truncated entry count");
+        throw std::runtime_error("File read error: entry count");
     }
 
     store_.clear();
+
     for (uint32_t i = 0; i < count; ++i) {
-        std::string svc  = readStr(f);
-        std::string url  = readStr(f);
-        std::string user = readStr(f);
-        auto encPwd      = readBytes(f);
-        uint8_t ct = 0;
-        if (std::fread(&ct, 1, 1, f) != 1) { std::fclose(f); throw std::runtime_error("File read error: cipher type"); }
-        int32_t param = 0;
-        if (std::fread(&param, sizeof(param), 1, f) != 1) { std::fclose(f); throw std::runtime_error("File read error: cipher param"); }
-        store_[svc] = Credential(url, user, std::move(encPwd),
-                                 static_cast<CipherType>(ct), param);
+        char*    s = nullptr; uint32_t sl = 0;
+        char*    u = nullptr; uint32_t ul = 0;
+        char*    n = nullptr; uint32_t nl = 0;
+        uint8_t* b = nullptr; uint32_t bl = 0;
+        uint8_t  ct    = 0;   /* hoisted — goto cannot cross initialisations in C++ */
+        int32_t  param = 0;
+
+        if (cv_read_str(f,   &s, &sl) != 0) goto read_err;
+        if (cv_read_str(f,   &u, &ul) != 0) { std::free(s); goto read_err; }
+        if (cv_read_str(f,   &n, &nl) != 0) { std::free(s); std::free(u); goto read_err; }
+        if (cv_read_bytes(f, &b, &bl) != 0) { std::free(s); std::free(u); std::free(n); goto read_err; }
+
+        if (std::fread(&ct,    1,            1, f) != 1) { std::free(s); std::free(u); std::free(n); std::free(b); goto read_err; }
+        if (std::fread(&param, sizeof(param),1, f) != 1) { std::free(s); std::free(u); std::free(n); std::free(b); goto read_err; }
+
+        {
+            std::string svc(s, sl);
+            std::vector<uint8_t> encPwd(b, b + bl);
+            store_[svc] = Credential(
+                std::string(u, ul),
+                std::string(n, nl),
+                std::move(encPwd),
+                static_cast<CipherType>(ct), param
+            );
+        }
+
+        std::free(s); std::free(u); std::free(n); std::free(b);
+        continue;
+
+read_err:
+        std::fclose(f);
+        throw std::runtime_error("File read error: truncated entry " + std::to_string(i));
     }
 
     std::fclose(f);
