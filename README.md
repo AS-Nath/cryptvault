@@ -37,6 +37,7 @@ Built as a case study for BACSE104 (Structured and Object-Oriented Programming) 
 ## Build
 
 Requires a C++17-capable compiler (GCC 7+ or Clang 5+).
+In the ```01_Source_Code/``` directory, run : 
 
 ```bash
 make
