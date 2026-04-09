@@ -142,18 +142,6 @@ The `CVT2` magic header is verified on every load. Files produced by the older `
 
 ---
 
-## Security Considerations
-
-This project is a **learning exercise**, not a production-grade security tool. A few things to be aware of:
-
-- The master password is hashed with a simple djb2 variant, not a proper password-hashing algorithm (bcrypt, Argon2, etc.).
-- XOR and Caesar ciphers are not cryptographically secure. They are included to demonstrate polymorphism and template design patterns.
-- Encrypted data is stored in a local binary file with no access controls beyond the file system.
-
-For any real-world secrets, use a production password manager.
-
----
-
 ## .gitignore
 
 ```gitignore
