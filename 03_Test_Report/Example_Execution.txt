@@ -1,0 +1,161 @@
+  ╔══════════════════════════════╗
+  ║       CryptVault v1.0        ║
+  ║   Secure Password Manager    ║
+  ╚══════════════════════════════╝
+
+  Set master password: masterpass123
+  Vault ready.
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 1
+  Service name (e.g. github): github
+  URL: github.com
+  Username: adityasn
+  Password: ghubpass@99
+
+  Choose cipher for this credential:
+    [1] XOR  (uses your master password as key)
+    [2] Caesar — enter a shift value (1-255)
+  Choice: 1
+[+] Stored credentials for "github" (cipher: XOR)
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 1
+  Service name (e.g. github): google
+  URL: google.com
+  Username: adityasn
+  Password: google#Pass1
+
+  Choose cipher for this credential:
+    [1] XOR  (uses your master password as key)
+    [2] Caesar — enter a shift value (1-255)
+  Choice: 2
+  Shift value (1-255): 25
+[+] Stored credentials for "google" (cipher: Caesar)
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 1
+  Service name (e.g. github): netflix
+  URL: netflix.com
+  Username: aditya.sn
+  Password: nflx$ecure7
+
+  Choose cipher for this credential:
+    [1] XOR  (uses your master password as key)
+    [2] Caesar — enter a shift value (1-255)
+  Choice: 1
+[+] Stored credentials for "netflix" (cipher: XOR)
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 3
+
+  Stored services:
+  • github — adityasn (github.com)  [XOR]
+  • google — adityasn (google.com)  [Caesar]
+  • netflix — aditya.sn (netflix.com)  [XOR]
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 2
+  Service name: github
+  Master password: masterpass123
+  Password for "github": ghubpass@99
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 2
+  Service name: google
+  Master password: masterpass123
+  Password for "google": google#Pass1
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 2
+  Service name: netflix
+  Master password: masterpass123
+  Password for "netflix": nflx$ecure7
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 4
+  Master password to save: masterpass123
+[+] Vault saved to vault.bin (3 entries)
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 5
+  Master password to load: masterpass123
+[+] Vault loaded from vault.bin (3 entries)
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 3
+
+  Stored services:
+  • github — adityasn (github.com)  [XOR]
+  • google — adityasn (google.com)  [Caesar]
+  • netflix — aditya.sn (netflix.com)  [XOR]
+
+  [1] Add credential
+  [2] Retrieve password
+  [3] List services
+  [4] Save vault
+  [5] Load vault
+  [0] Exit
+
+  Choice: 0
+  Goodbye.
