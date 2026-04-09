@@ -20,7 +20,7 @@ Built as a case study for BACSE104 (Structured and Object-Oriented Programming) 
 ## Project Structure
 
 ```
-cryptvault/
+01_Source_Code/
 ├── cipher.h          # Cipher (abstract), XORCipher, CaesarCipher
 ├── credential.h      # Credential struct + CipherType enum
 ├── data_protector.h  # DataProtector<T> template + std::string specialisation
